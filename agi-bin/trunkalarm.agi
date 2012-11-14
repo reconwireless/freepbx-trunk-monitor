@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DATE=`date &quot;+%d.%m.%Y. %H:%M&quot;`
+HOST=`hostname`
+# initializing agi variables
+declare -a array
+while read -e ARG &amp;amp;&amp;amp; [ &quot;$ARG&quot; ] ; do
+    array=(` echo $ARG | sed -e 's/://'`)
+    export ${array[0]}=${array[1]}
+done
+
+MESSAGE=&quot;Incident happend $DATE.n$agi_calleridname [$agi_callerid] tried to dial number $agi_dnid.nCall could not be established on channel $agi_channel.&quot;
+# write log
+echo &quot;$DATE Call could not be established. $agi_calleridname [$agi_callerid] --&amp;gt; $agi_dnid&quot; &amp;gt;&amp;gt; /var/log/asterisk/trunk
+# send email
+echo -e &quot;$MESSAGE&quot; | mail -s &quot;Incident at $HOST IP-PBX&quot; recipient@domain.com -- -F &quot;Asterisk&quot;
