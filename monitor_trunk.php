@@ -1,78 +1,187 @@
+#!/usr/bin/php -q
 <?php
-//
-//
-//This program is free software; you can redistribute it and/or
-//modify it under the terms of the GNU General Public License
-//as published by the Free Software Foundation; either version 2
-//of the License, or (at your option) any later version.
-//
-//This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
 
-// check to see if user has automatic updates enabled
-$cm =& cronmanager::create($db);
-$online_updates = $cm->updates_enabled() ? true : false;
+/**
+* To monitor the trunk registration, despatch email when non-registered trunk is detected
+* @package      Eyo
+* @version      $Revision: 1.2 $
+* @file         $RCSfile: monitor_trunk.php,v $
+* @date         $Date: 2009/11/02 04:31:29 $
+* @author       $Author: nsu $
+*/
 
-// check if new version of module is available
-if ($online_updates && $foo = tidecity_vercheck()) {
-	print "<br>A <b>new version</b> of the Tide City module is available from the <a target='_blank' href='http://github.com/reconwireless/freepbx-tide-by-city/downloads'>Reconwireless Repository on github</a><br>";
+
+/** ***********************************************************
+* A quick and dirty way to report a failing trunk registration.
+* Run this regularly, hopefully you will get an alert about one or more failing trunks.
+* You run this script at your own risk.
+* Not sure what damage this can cause, but I think a bathroom leakage should have nothing to do with this.
+* Nikol S ns at eyo.com.au
+* *************************************************************
+*/
+
+// To setup,
+// 1. Change the report_email to yours.
+// 2. Put this file somewhere (eg. /root/cron/monitor_trunk.php)
+//	chmod it to 750(#chmod 750 monitor_trunk.php). Either owned by root or asterisk(#chown root.root monitor_trunk.php).
+// 3. Edit /var/spool/cron/root, and add
+//    */15 * * * * /root/cron/monitor_trunk.php
+//    to the file. Last line in the cron file must have a carriage return!
+//    Above entry in the cron file will run the script every 15 minutes.
+        
+
+// set up the email address to receive the alert email
+$report_email = $trunkemail;
+
+
+
+
+// No need to edit below, unless you need or want.
+
+$state = wots_up();
+//echo $state;
+
+if ($state == 'ok')
+{
+
+	//grace, usually should go this route
+	exit;
+}
+else
+{
+	//keep cool for 20 seconds, we try again.
+	sleep(20);
+	$state = wots_up();
+	$have_done = "CustomerX has a problem with a trunk. I am attempting to fix it.\r\n";
 }
 
-//tts_findengines()
-if(count($_POST)){
-	tideoptions_saveconfig();
+if ($state == 'ok')
+{
+	//lucky we tried
+	exit;
 }
-	$date = tideoptions_getconfig();
-	$selected = ($date[0]);
+else
+{
+	$have_done .= "Trying to reload the sip channels.\r\n";
+	$have_done .= shell_exec('/usr/sbin/asterisk -rx "module reload chan_sip"');
+	sleep(20);
+	$have_done .= "Reloaded sip channels and waited 20 seconds.\r\n";
+	$state = wots_up();
+}
 
-//  Get current featurecode from FreePBX registry
-$fcc = new featurecode('tidecity', 'tidecity');
-$featurecode = $fcc->getCodeActive(); 
+if ($state == 'ok')
+{
+	$have_done = "I managed to fix the problem. You can relax. \r\n";
+	//wipes the sweat
+	exit;
+}
 
-?>
-<form method="POST" action="">
-	<br><h2><?php echo _("U.S. Tide by City")?><hr></h5></td></tr>
-Tide by City allows you to retrieve current tide information from any touchtone phone using nothing more than your PBX connected to the Internet.  When prompted you key your U.S. Zip Code, the report is downloaded, converted to an audio file, and played back to you.<br><br>
-Current tide conditions and/or forecast for the chosen Zip Code will then will be retrieved from the selected service using the selected text-to-speech engine. <br><br>
-The feature code to access this service is currently set to <b><?PHP print $featurecode; ?></b>.  This value can be changed in Feature Codes. <br>
+$status = "$have_done\r\n=====================have done above, the current status: =====================\r\n$status";
 
-<br><h5>User Data:<hr></h5>
-Select the Text To Speach engine and Forecast source combination you wish the Tide by City program to use.<br>The module does not check to see if the selected TTS engine is present, ensure to choose an engine that is installed on the system.<br><br>
-<a href="#" class="info">Choose a service and engine:<span>Choose from the list of supported TTS engines and Tide services</span></a>
+if ($state == 'requesting')
+{
+	send_alert_email('CustomerX trunk has been sending registrating requests', $status);
+}
+elseif ($state == 'empty')
+{
+	send_alert_email('CustomerX voip trunk registration status is empty', $status);
+}
+elseif ($state == 'no_auth')
+{
+	send_alert_email('CustomerX - No Authentication is reported, wrong password?', $status);
+}
+elseif ($state == 'unregistered')
+{
+	send_alert_email('CustomerX has Unregistered trunk', $status);
+}
+elseif ($state == 'failed')
+{
+	send_alert_email('CustomerX has Registration failed trunk', $status);
+}
+elseif ($state == 'auth_sent')
+{
+	send_alert_email('CustomerX has trunk with Auth. Sent status', $status);
+}
+elseif ($state == 'rejected')
+{
+	send_alert_email('CustomerX has trunk with Rejected status', $status);
+}
+else
+{
+	send_alert_email('CustomerX trunk status is not registered', "$state\r\n\r\n$status");
+}
 
-<select size="1" name="engine">
-<?php
-echo "<option".(($date[0]=='noaa-flite')?' selected':'').">noaa-flite</option>\n";
-echo "<option".(($date[0]=='noaa-swift')?' selected':'').">noaa-swift</option>\n";
-echo "<option".(($date[0]=='tide-wunderground-flite')?' selected':'').">tide-wunderground-flite</option>\n";
-echo "<option".(($date[0]=='tide-wunderground-swift')?' selected':'').">tide-wunderground-swift</option>\n";
-echo "<option".(($date[0]=='tide-wunderground-googletts')?' selected':'').">tide-wunderground-googletts</option>\n";
-echo "<option".(($date[0]=='wunderground-flite')?' selected':'').">wunderground-flite</option>\n";
-echo "<option".(($date[0]=='wunderground-swift')?' selected':'').">wunderground-swift</option>\n";
-echo "<option".(($date[0]=='wunderground-googletts')?' selected':'').">wunderground-googletts</option>\n";
-echo "<option".(($date[0]=='recon-tide-flite')?' selected':'').">recon-tide-flite</option>\n";
-?>
-</select>
-<br><a href="#" class="info">Wunderground API KEY:<span>Input free API key from registration with http://wunderground.com weather service</span></a>
-<input type="text" name="wgroundkey" size="27" value="<?php echo $date[1]; ?>">  <a href="javascript: return false;" class="info"> 
-<br><a href="#" class="info">Tide City:<span>Input US City</span></a>
-<input type="text" name="wgroundcity" size="27" value="<?php echo $wcity[1]; ?>">  <a href="javascript: return false;" class="info"> 
-<br><a href="#" class="info">Tide State:<span>Input two digit state abbreviation</span></a>
-<input type="text" name="wgroundstate" size="02" value="<?php echo $wstate[1]; ?>">  <a href="javascript: return false;" class="info"> 
-<br><br>key:<br>
-<b>noaa</b> - National Oceanic and Atmospheric Administration (USA weather service)<br>
-<b>wunderground</b> - Weather API provided by wunderground.com<br>
-<b>flite</b> - Asterisk Flite Text to Speech Engine<br>
-<b>swift</b> - Cepstral Swift Text to Speech Engine<br>
-<b>googletts</b> - Google text to speech engine by Lefteris Zafiris<br>
+// the function wots_up() parses the output of the asterisk command "sip show registry"
+// and compares the content of the "State" column.  Working for Asterisk 1.8, changes in 
+// Asterisk output may break the function.
+function wots_up()
+{
+	global $status;
+	
+	//Prob the trunk registration.
+	$status = shell_exec('/usr/sbin/asterisk -rx "sip show registry"');
+	
+	if (strlen(trim($status)) == 0)
+	{
+		return 'empty';
+	}
+	
+	$lines = explode("\n", str_replace("\r\n", "\n", trim($status)));
+
+	for ($i = 1; $i < count($lines) - 1; $i++)
+	{
+		//echo "line $i " .  $lines[$i] . "\n";
+		if (strpos($lines[$i], 'Request Sent') !== false)
+		{
+			return 'requesting';
+		}
+		elseif(strpos($lines[$i], 'No Authentication') !== false)
+		{
+			return 'no_auth';
+		}
+		elseif(strpos($lines[$i], 'Unregistered') !== false)
+		{
+			return 'unregistered';
+		}
+		elseif (strpos($lines[$i], 'Failed') !== false)
+		{
+			return 'failed';
+		}
+		elseif (strpos($lines[$i], 'Auth. Sent') !== false)
+		{
+			return 'auth_sent';
+		}
+		elseif (strpos($lines[$i], 'Rejected') !== false)
+		{
+			return 'rejected';
+		}
+		elseif (strpos($lines[$i], 'Timeout') !== false)
+		{
+			return 'timeout';
+		}
+		elseif (strpos($lines[$i], 'Unknown') !== false)
+		{
+			return 'unknown';
+		}
 		
-<br><br><input type="submit" value="Submit" name="B1"><br>
+		$temp = preg_split('/\s+/', $lines[$i]);
+		if (!isset($temp[4]))
+		{
+			return "Can not extract Reg State for this line: " . $lines[$i];
+		}
+		elseif ($temp[4] <> "Registered")
+		{
+			return "Unknown Reg state for this line: " . $lines[$i];
+		}
+	}
+	
+	return 'ok';
+}
 
-<center><br>
-The module is forked by reconwireless from the developer community at <a target="_blank" href="http://pbxossa.org"> PBX Open Source Software Alliance</a>.  Support, documentation and current versions are available at the tide module <a target="_blank" href="https://github.com/reconwireless/freepbx-tide-by-city">reconwireless dev site</a></center>
-<?php
-print '<p align="center" style="font-size:11px;">The Weather by Zip and Google Weather scripts were created and are currently maintaned by <a target="_blank" href="http://www.nerdvittles.com">Nerd Vittles</a>.';
+function send_alert_email($subject, $email_content = '')
+{
+	global $report_email;
+	mail($report_email, $subject, $email_content);
+}
 
 ?>

@@ -16,19 +16,19 @@ $cm =& cronmanager::create($db);
 $online_updates = $cm->updates_enabled() ? true : false;
 
 // check if new version of module is available
-if ($online_updates && $foo = tidecity_vercheck()) {
-	print "<br>A <b>new version</b> of the Tide City module is available from the <a target='_blank' href='http://github.com/reconwireless/freepbx-tide-by-city/downloads'>Reconwireless Repository on github</a><br>";
+if ($online_updates && $foo = trunkalarm_vercheck()) {
+	print "<br>A <b>new version</b> of the Trunk Monitor module is available from the <a target='_blank' href='http://github.com/reconwireless/freepbx-trunk-monitor/downloads'>Reconwireless Repository on github</a><br>";
 }
 
 //tts_findengines()
 if(count($_POST)){
-	tideoptions_saveconfig();
+	trunkalarmoptions_saveconfig();
 }
-	$date = tideoptions_getconfig();
+	$date = trunkalarmoptions_getconfig();
 	$selected = ($date[0]);
 
 //  Get current featurecode from FreePBX registry
-$fcc = new featurecode('tidecity', 'tidecity');
+$fcc = new featurecode('trunkalarm', 'trunkalarm');
 $featurecode = $fcc->getCodeActive(); 
 
 ?>
@@ -44,35 +44,31 @@ Select the Text To Speach engine and Forecast source combination you wish the Ti
 
 <select size="1" name="engine">
 <?php
-echo "<option".(($date[0]=='noaa-flite')?' selected':'').">noaa-flite</option>\n";
-echo "<option".(($date[0]=='noaa-swift')?' selected':'').">noaa-swift</option>\n";
-echo "<option".(($date[0]=='tide-wunderground-flite')?' selected':'').">tide-wunderground-flite</option>\n";
-echo "<option".(($date[0]=='tide-wunderground-swift')?' selected':'').">tide-wunderground-swift</option>\n";
-echo "<option".(($date[0]=='tide-wunderground-googletts')?' selected':'').">tide-wunderground-googletts</option>\n";
-echo "<option".(($date[0]=='wunderground-flite')?' selected':'').">wunderground-flite</option>\n";
-echo "<option".(($date[0]=='wunderground-swift')?' selected':'').">wunderground-swift</option>\n";
-echo "<option".(($date[0]=='wunderground-googletts')?' selected':'').">wunderground-googletts</option>\n";
-echo "<option".(($date[0]=='recon-tide-flite')?' selected':'').">recon-tide-flite</option>\n";
+echo "<option".(($date[0]=='trunkalarm-nocall')?' selected':'').">trunkalarm-nocall</option>\n";
+echo "<option".(($date[0]=='trunkalarm-internal-flite')?' selected':'').">trunkalarm-internal-flite</option>\n";
+echo "<option".(($date[0]=='trunkalarm-external-flite')?' selected':'').">trunkalarm-external-flite</option>\n";
+echo "<option".(($date[0]=='trunkalarm-both-flite')?' selected':'').">trunkalarm-both-flite</option>\n";
 ?>
 </select>
-<br><a href="#" class="info">Wunderground API KEY:<span>Input free API key from registration with http://wunderground.com weather service</span></a>
-<input type="text" name="wgroundkey" size="27" value="<?php echo $date[1]; ?>">  <a href="javascript: return false;" class="info"> 
-<br><a href="#" class="info">Tide City:<span>Input US City</span></a>
-<input type="text" name="wgroundcity" size="27" value="<?php echo $wcity[1]; ?>">  <a href="javascript: return false;" class="info"> 
-<br><a href="#" class="info">Tide State:<span>Input two digit state abbreviation</span></a>
-<input type="text" name="wgroundstate" size="02" value="<?php echo $wstate[1]; ?>">  <a href="javascript: return false;" class="info"> 
+<br><a href="#" class="info">PBX Name:<span>What would you like to call this PBX</span></a>
+<input type="text" name="pbxname" size="40" value="<?php echo $pbxname[1]; ?>">  <a href="javascript: return false;" class="info"> 
+<br><a href="#" class="info">Trunk Alarm Reports Email:<span>Input email address for trunk alarm delivery</span></a>
+<input type="text" name="trunkemail" size="40" value="<?php echo $trunkemail[1]; ?>">  <a href="javascript: return false;" class="info"> 
+<br><a href="#" class="info">Trunk Alarm Extension:<span>Input Internal Extension to be dialed if trunk fails</span></a>
+<input type="text" name="trunkalarmext" size="15" value="<?php echo $trunkext[1]; ?>">  <a href="javascript: return false;" class="info"> 
+<br><a href="#" class="info">Trunk Alarm Number:<span>Input External Number to be dialed if trunk fails</span></a>
+<input type="text" name="trunkalarmnumber" size="15" value="<?php echo $trunknumber[1]; ?>">  <a href="javascript: return false;" class="info"> 
 <br><br>key:<br>
-<b>noaa</b> - National Oceanic and Atmospheric Administration (USA weather service)<br>
-<b>wunderground</b> - Weather API provided by wunderground.com<br>
-<b>flite</b> - Asterisk Flite Text to Speech Engine<br>
-<b>swift</b> - Cepstral Swift Text to Speech Engine<br>
-<b>googletts</b> - Google text to speech engine by Lefteris Zafiris<br>
+<b>nocall</b> - No Trunk Alert Calls will be placed<br>
+<b>internal</b> - Trunk Alert Calls will be placed to the internal extension specified<br>
+<b>external</b> - Trunk Alert Calls will be placed to the external extension specified (assuming there is a working outbound trunk)<br>
+<b>both</b> - Trunk Alert Calls will be placed to both the internal and external numbers specified<br>
 		
 <br><br><input type="submit" value="Submit" name="B1"><br>
 
 <center><br>
-The module is forked by reconwireless from the developer community at <a target="_blank" href="http://pbxossa.org"> PBX Open Source Software Alliance</a>.  Support, documentation and current versions are available at the tide module <a target="_blank" href="https://github.com/reconwireless/freepbx-tide-by-city">reconwireless dev site</a></center>
+The module is designed for the personal testing and use of Reconwireless. Support, documentation and current versions are available at the trunk-monitor module page on the <a target="_blank" href="https://github.com/reconwireless/freepbx-trunk-monitor">reconwireless dev site</a></center>
 <?php
-print '<p align="center" style="font-size:11px;">The Weather by Zip and Google Weather scripts were created and are currently maintaned by <a target="_blank" href="http://www.nerdvittles.com">Nerd Vittles</a>.';
+
 
 ?>
