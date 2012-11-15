@@ -1,0 +1,21 @@
+<module>
+	<rawname>trunkalarm</rawname>
+	<name>Trunk Monitor</name>
+	<version>0.0.0.1</version>
+	<license>GNU GPL2</license>
+	<type>setup</type>
+	<category>Other</category>
+	<menuitems>
+		<tidecity>Trunk Alarm</tidecity>
+	</menuitems>
+    <publisher>RECONWIRELESS</publisher> 
+	<description>
+                Provide email/voice alarms for Failing Trunks
+        </description>
+	 <changelog>
+			*0.0.0.1 Putting together the pieces 
+			*0.0.0* Initial Commit  
+        </changelog>
+	<info>https://github.com/reconwireless/freepbx-trunk-monitor</info>
+	<location>https://github.com/reconwireless/freepbx-trunk-monitor</location>
+ </module>

@@ -2,7 +2,7 @@
 <?php
 
 /**
-* To monitor the trunk registration, despatch email when non-registered trunk is detected
+* To monitor the trunk registration, dispatch email when non-registered trunk is detected
 * @package      Eyo
 * @version      $Revision: 1.2 $
 * @file         $RCSfile: monitor_trunk.php,v $
@@ -25,10 +25,18 @@
 // 2. Put this file somewhere (eg. /root/cron/monitor_trunk.php)
 //	chmod it to 750(#chmod 750 monitor_trunk.php). Either owned by root or asterisk(#chown root.root monitor_trunk.php).
 // 3. Edit /var/spool/cron/root, and add
-//    */15 * * * * /root/cron/monitor_trunk.php
+//    */15 * * * * /asterisk/agi-bin/monitor_trunk.php
 //    to the file. Last line in the cron file must have a carriage return!
 //    Above entry in the cron file will run the script every 15 minutes.
-        
+
+  //*** start code added for #module compatibility
+$bootstrap_settings['freepbx_auth'] = false;
+if (!@include_once(getenv('FREEPBX_CONF') ? getenv('FREEPBX_CONF') : '/etc/freepbx.conf')) {
+include_once('/etc/asterisk/freepbx.conf');
+}
+// get user data from module
+$date = trunkalarmoptions_getconfig();
+//*** end code added for #module compatibility      
 
 // set up the email address to receive the alert email
 $report_email = $trunkemail;
@@ -177,7 +185,7 @@ function wots_up()
 	
 	return 'ok';
 }
-
+///create code here to place phone call with email_content using TTS
 function send_alert_email($subject, $email_content = '')
 {
 	global $report_email;

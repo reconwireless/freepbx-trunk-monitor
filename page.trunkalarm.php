@@ -33,14 +33,14 @@ $featurecode = $fcc->getCodeActive();
 
 ?>
 <form method="POST" action="">
-	<br><h2><?php echo _("U.S. Tide by City")?><hr></h5></td></tr>
-Tide by City allows you to retrieve current tide information from any touchtone phone using nothing more than your PBX connected to the Internet.  When prompted you key your U.S. Zip Code, the report is downloaded, converted to an audio file, and played back to you.<br><br>
-Current tide conditions and/or forecast for the chosen Zip Code will then will be retrieved from the selected service using the selected text-to-speech engine. <br><br>
+	<br><h2><?php echo _("Trunk Monitor")?><hr></h5></td></tr>
+Trunk Monitoring allows you to recieve an email alert whenvever the system detects a Trunk Failure.  .<br><br>
+The goal is to have an automated call to an internal and external extension reading the trunk failure information via the selected text-to-speech engine. <br><br>
 The feature code to access this service is currently set to <b><?PHP print $featurecode; ?></b>.  This value can be changed in Feature Codes. <br>
 
 <br><h5>User Data:<hr></h5>
-Select the Text To Speach engine and Forecast source combination you wish the Tide by City program to use.<br>The module does not check to see if the selected TTS engine is present, ensure to choose an engine that is installed on the system.<br><br>
-<a href="#" class="info">Choose a service and engine:<span>Choose from the list of supported TTS engines and Tide services</span></a>
+Select the Notifications Options and TTS Program combination you wish the Trunk Monitoring program to use.<br>The module does not check to see if the selected TTS engine is present, ensure to choose an engine that is installed on the system.<br><br>
+<a href="#" class="info">Choose a service and engine:<span>Choose from the list of supported TTS engines and Notification services</span></a>
 
 <select size="1" name="engine">
 <?php
@@ -59,7 +59,7 @@ echo "<option".(($date[0]=='trunkalarm-both-flite')?' selected':'').">trunkalarm
 <br><a href="#" class="info">Trunk Alarm Number:<span>Input External Number to be dialed if trunk fails</span></a>
 <input type="text" name="trunkalarmnumber" size="15" value="<?php echo $trunknumber[1]; ?>">  <a href="javascript: return false;" class="info"> 
 <br><br>key:<br>
-<b>nocall</b> - No Trunk Alert Calls will be placed<br>
+<b>nocall</b> - No Trunk Alert Calls will be placed, only email<br>
 <b>internal</b> - Trunk Alert Calls will be placed to the internal extension specified<br>
 <b>external</b> - Trunk Alert Calls will be placed to the external extension specified (assuming there is a working outbound trunk)<br>
 <b>both</b> - Trunk Alert Calls will be placed to both the internal and external numbers specified<br>
